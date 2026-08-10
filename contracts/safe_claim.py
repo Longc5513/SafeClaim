@@ -12,9 +12,7 @@ Approved claims release escrowed funds to the consumer.  Denied claims allow the
 consumer one retry window.  Either party may raise a dispute that pauses the
 claim and routes it to a designated arbiter.
 
-Workflow inspired by VerdictRelay (push-based evidence judging) and Callit
-(management/challenge lifecycle), but the domain, storage layout, consensus
-prompt, and state machine are original.
+The domain, storage layout, consensus prompt, and state machine are original.
 
 Safe-failure direction: any unparseable or ambiguous model output defaults to
 NEEDS_MORE_EVIDENCE (never a fabricated APPROVED/DENIED).

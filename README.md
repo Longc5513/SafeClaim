@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/GenLayer-Intelligent%20Contract-7c3aed?style=flat-square&logo=data:image/svg+xml;base64,..." alt="GenLayer" />
+  <img src="https://img.shields.io/badge/GenLayer-Intelligent%20Contract-7c3aed?style=flat-square" alt="GenLayer" />
   <img src="https://img.shields.io/badge/Python-3.11+-3776ab?style=flat-square&logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Status-Active-10b981?style=flat-square" alt="Status" />
+  <img src="https://img.shields.io/badge/Network-Bradbury%20Testnet-10b981?style=flat-square" alt="Network" />
   <img src="https://img.shields.io/badge/License-MIT-ffd700?style=flat-square" alt="License" />
 </p>
 
@@ -19,51 +19,49 @@
 
 ## What It Does
 
-SafeClaim is a GenLayer Intelligent Contract that escrows per-unit compensation for product-safety recalls. A manufacturer (or insurer) deposits funds into a recall pool; affected consumers file claims by submitting evidence URLs (receipt pages, product registration portals, recall-notice databases). Validators fetch those URLs live inside consensus, cross-reference them against the recall criteria, and render a verdict: **APPROVED**, **NEEDS_EVIDENCE**, or **DENIED**.
+SafeClaim is a push-based product-safety recall compensation service on GenLayer. A manufacturer deposits per-unit compensation into a recall pool. Affected consumers file claims by submitting evidence URLs (receipts, product registration, recall databases). Validators fetch those URLs live inside consensus and judge: **APPROVED** (consumer is affected, pay them), **NEEDS_EVIDENCE** (ambiguous, allow retry), or **DENIED** (not affected).
 
-Approved claims release escrowed funds to the consumer. Denied claims allow retry with new evidence. Either party can raise a dispute that routes to a designated arbiter.
+The verdict is **pushed** to the consumer's callback contract via `emit(on="finalized")` — consumers never poll.
 
 ## Why GenLayer
 
-No other platform lets a smart contract **fetch a live web page inside validator consensus** and have multiple independent validators agree on whether the page's content supports a claim. Traditional oracles trust one operator; multisigs add delay; deterministic chains can't read the web at all. SafeClaim uses GenLayer's `gl.nondet.web.render()` + `gl.eq_principle.prompt_comparative()` to make the evidence judgment itself a consensus-verified fact.
+No other platform lets a smart contract fetch live web pages inside validator consensus and have multiple independent validators agree on whether the content supports a recall claim. SafeClaim uses `gl.nondet.web.render()` + `gl.eq_principle.prompt_comparative()` for trustless evidence verification.
+
+## Key Methods
+
+| Method | Who | Type | What |
+|--------|-----|------|------|
+| `create_recall` | Manufacturer | payable | Deposit escrow, set criteria + per-unit amount |
+| `file_claim` | Consumer | write | Submit evidence URLs for a recall |
+| `resolve_claim` | Anyone | write | Trigger AI consensus + push verdict to callback |
+| `retry_claim` | Consumer | write | Resubmit evidence after NEEDS_EVIDENCE |
+| `reclaim_stale_claim` | Consumer | write | Reclaim stale claims |
+| `raise_dispute` | Either party | write | Route to arbiter |
+| `resolve_dispute` | Arbiter | write | Final APPROVE/REJECT |
+| `spawn_instance` | Anyone | write | Factory: deploy child SafeClaim instance |
+| `close_recall` | Manufacturer | write | Close pool, refund unclaimed balance |
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    SafeClaim Contract                    │
-├──────────────┬──────────────┬───────────────────────────┤
-│  RecallPool  │    Claim     │  Consensus Judge          │
-│  (escrow)    │  (evidence)  │  (web.render + exec_prompt)│
-├──────────────┼──────────────┼───────────────────────────┤
-│  manufacturer│  consumer    │  APPROVED → pay consumer   │
-│  deposits    │  submits     │  DENIED   → reject         │
-│  per-unit $  │  evidence    │  NEEDS    → allow retry    │
-│  + criteria  │  URLs        │                           │
-└──────────────┴──────────────┴───────────────────────────┘
+Consumer ──file_claim──> SafeClaim ──resolve_claim──> Validators
+                              │                            │
+                              │  gl.nondet.web.render()    │
+                              │  gl.nondet.exec_prompt()   │
+                              │                            │
+                              ◄──push verdict──────────────┘
+                              │
+                         emit_transfer → Consumer
 ```
 
-## Key Methods
+## Deployment
 
-| Method | Who | What |
-|--------|-----|------|
-| `create_pool` | Manufacturer | Deposit escrow, set recall criteria + per-unit amount |
-| `file_claim` | Consumer | Submit evidence URLs for a recall pool |
-| `resolve_claim` | Anyone | Trigger AI consensus verification |
-| `retry_claim` | Consumer | Resubmit with new evidence after NEEDS_EVIDENCE |
-| `raise_dispute` | Either party | Pause claim, route to arbiter |
-| `resolve_dispute` | Arbiter | Final APPROVE/REJECT |
-| `close_pool` | Manufacturer | Close pool, refund unclaimed balance |
-| `expire_stale_claims` | Anyone | Expire claims past stale threshold |
+| Network | Contract Address | Deploy TX |
+|---------|-----------------|-----------|
+| Bradbury (testnet) | `0xc55D56f0EceFe6F03F86774141B41051e4FBE046` | `0x5b57bcb8...` |
 
-## Consensus Design
-
-Two non-deterministic operations, nothing more:
-
-1. **`gl.nondet.web.render()`** — fetch each evidence URL as live text
-2. **`gl.nondet.exec_prompt()`** — judge whether fetched text demonstrates recall-affected status
-
-Everything else — escrow accounting, state transitions, dispute routing, refund logic — is deterministic Python. Safe-failure direction: any unparseable or ambiguous model output defaults to `NEEDS_EVIDENCE`, never a fabricated `APPROVED`/`DENIED`.
+- Explorer: https://explorer-bradbury.genlayer.com/contract/0xc55D56f0EceFe6F03F86774141B41051e4FBE046
+- Deploy TX: https://explorer-bradbury.genlayer.com/tx/0x5b57bcb8ab58dcd0684f669d7c0ec9075adb84544a4fcb5d937104915fe9e64a
 
 ## Deploy
 
@@ -74,12 +72,3 @@ genlayer deploy --contract contracts/safe_claim.py
 ## License
 
 MIT
-
-## Deployment
-
-| Network | Contract Address | Deploy TX |
-|---------|-----------------|-----------|
-| Bradbury (testnet) | `0x5cfdc943dDE197eCc587f5C67a62600E65aBd591` | `0x5122bdbd...` |
-
-- Explorer: https://explorer-bradbury.genlayer.com/contract/0x5cfdc943dDE197eCc587f5C67a62600E65aBd591
-- Deploy TX: https://explorer-bradbury.genlayer.com/tx/0x5122bdbd4c9f52cdeb1e7dad069238c01105bb0401d73d65042a4ce8e5f5f9f9

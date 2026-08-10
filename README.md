@@ -60,7 +60,7 @@ Consumer ──file_claim──> SafeClaim ──resolve_claim──> Validators
 |---------|-----------------|-----------|
 | Bradbury (testnet) | `0xc55D56f0EceFe6F03F86774141B41051e4FBE046` | `0x5b57bcb8...` |
 
-- Explorer: https://explorer-bradbury.genlayer.com/contract/0xc55D56f0EceFe6F03F86774141B41051e4FBE046
+- Explorer: https://explorer-bradbury.genlayer.com/address/0xc55D56f0EceFe6F03F86774141B41051e4FBE046
 - Deploy TX: https://explorer-bradbury.genlayer.com/tx/0x5b57bcb8ab58dcd0684f669d7c0ec9075adb84544a4fcb5d937104915fe9e64a
 
 ## Deploy

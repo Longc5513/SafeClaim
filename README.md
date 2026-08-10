@@ -74,3 +74,12 @@ genlayer deploy --contract contracts/safe_claim.py
 ## License
 
 MIT
+
+## Deployment
+
+| Network | Contract Address | Deploy TX |
+|---------|-----------------|-----------|
+| Bradbury (testnet) | `0x5cfdc943dDE197eCc587f5C67a62600E65aBd591` | `0x5122bdbd...` |
+
+- Explorer: https://bradbury.genlayer.com/contract/0x5cfdc943dDE197eCc587f5C67a62600E65aBd591
+- Deploy TX: https://bradbury.genlayer.com/tx/0x5122bdbd4c9f52cdeb1e7dad069238c01105bb0401d73d65042a4ce8e5f5f9f9
